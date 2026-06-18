@@ -1,19 +1,12 @@
 # roles/packages/defaults/main.yml
-# Default values for the packages role.
-# Override any of these in group_vars/all.yml.
+# Safe fallback defaults — these apply only if not overridden in group_vars/all.yml.
+# In practice, group_vars/all.yml is the user's package list and takes precedence.
 
 # CLI tools to install via `brew install`.
-homebrew_packages:
-  - git
-  - curl
-  - tree
+homebrew_packages: []
 
 # GUI applications to install via `brew install --cask`.
 homebrew_casks: []
 
 # Homebrew taps to add before installing packages.
-# Format: "owner/repo" — same as `brew tap owner/repo`.
 homebrew_taps: []
-# homebrew_taps:
-#   - homebrew/cask-fonts
-#   - aws/tap

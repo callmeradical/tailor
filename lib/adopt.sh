@@ -19,11 +19,11 @@ adopt_brew() {
   local pkg="$1"
   [ -z "$pkg" ] && die "usage: tailor adopt brew <package>"
 
-  local vars_dir="$TAILOR_CONFIG_DIR/roles/packages/vars"
-  local vars_file="$vars_dir/main.yml"
+  # Write to group_vars/all.yml — the user's primary config file.
+  # roles/packages/vars/main.yml must NOT exist; it would override group_vars.
+  local vars_file="$TAILOR_CONFIG_DIR/group_vars/all.yml"
 
-  [ -d "$vars_dir" ] || die "roles/packages role not found at $vars_dir — run 'tailor init' first or check TAILOR_CONFIG_DIR"
-  [ -f "$vars_file" ] || die "vars file not found: $vars_file"
+  [ -f "$vars_file" ] || die "group_vars/all.yml not found at $vars_file — check TAILOR_CONFIG_DIR"
 
   # Check if package already present
   if grep -qE "^\s*-\s+['\"]?${pkg}['\"]?\s*$" "$vars_file"; then

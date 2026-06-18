@@ -70,11 +70,12 @@ assert_file_exists() {
 setup_config_dir() {
   local tmpdir
   tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/roles/packages/vars"
+  mkdir -p "$tmpdir/group_vars"
+  mkdir -p "$tmpdir/roles/packages"
   mkdir -p "$tmpdir/roles/dotfiles/files"
   mkdir -p "$tmpdir/roles/dotfiles/tasks"
-  # Minimal vars file
-  cat > "$tmpdir/roles/packages/vars/main.yml" << 'YAML'
+  # group_vars/all.yml is the single source of truth for user packages
+  cat > "$tmpdir/group_vars/all.yml" << 'YAML'
 ---
 homebrew_packages:
   - git
@@ -105,12 +106,12 @@ CFGDIR=$(setup_config_dir)
 
 # Test 1: adopt brew adds package to vars file
 EDITOR=cat TAILOR_CONFIG_DIR="$CFGDIR" bash "$ADOPT" brew "ripgrep" > /dev/null
-assert_contains "$CFGDIR/roles/packages/vars/main.yml" "ripgrep" \
-  "adopt brew adds package to vars file"
+assert_contains "$CFGDIR/group_vars/all.yml" "ripgrep" \
+  "adopt brew adds package to group_vars/all.yml"
 
 # Test 2: adopt brew is idempotent (second run does not duplicate)
 EDITOR=cat TAILOR_CONFIG_DIR="$CFGDIR" bash "$ADOPT" brew "ripgrep" > /dev/null
-COUNT=$(grep -c "ripgrep" "$CFGDIR/roles/packages/vars/main.yml" || true)
+COUNT=$(grep -c "ripgrep" "$CFGDIR/group_vars/all.yml" || true)
 if [ "$COUNT" -eq 1 ]; then
   pass "adopt brew is idempotent (second run does not duplicate)"
 else
