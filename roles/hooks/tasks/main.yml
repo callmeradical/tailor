@@ -1,0 +1,54 @@
+---
+# roles/hooks/tasks/main.yml
+# Runs lifecycle hook scripts (pre-apply.sh or post-apply.sh) if they exist.
+# This role is a no-op when the hook script is absent — safe by default.
+#
+# Usage in site.yml:
+#   - role: hooks
+#     vars:
+#       hooks_phase: pre    # runs roles/hooks/pre-apply.sh
+#
+#   - role: hooks
+#     vars:
+#       hooks_phase: post   # runs roles/hooks/post-apply.sh
+#
+# The hook script receives no arguments. It runs in the repo root directory.
+# Exit code non-zero aborts the playbook run.
+
+# ── Resolve hook script path ──────────────────────────────────────────────────
+- name: Set hook script path
+  ansible.builtin.set_fact:
+    hooks_script_path: "{{ playbook_dir }}/roles/hooks/{{ hooks_phase }}-apply.sh"
+
+# ── Check existence ───────────────────────────────────────────────────────────
+- name: Check if hook script exists — {{ hooks_phase }}-apply.sh
+  ansible.builtin.stat:
+    path: "{{ hooks_script_path }}"
+  register: hooks_script_stat
+
+- name: Skip — hook script not found ({{ hooks_phase }}-apply.sh)
+  ansible.builtin.debug:
+    msg: "{{ hooks_script_path }} not found — skipping {{ hooks_phase }} hook."
+  when: not hooks_script_stat.stat.exists
+
+# ── Execute ───────────────────────────────────────────────────────────────────
+- name: Run hook script — {{ hooks_phase }}-apply.sh
+  ansible.builtin.command:
+    cmd: "bash {{ hooks_script_path }}"
+    chdir: "{{ playbook_dir }}"
+  when: hooks_script_stat.stat.exists
+  changed_when: true   # hooks are assumed to do something — report changed
+
+# ── Notes / examples ─────────────────────────────────────────────────────────
+# To add a hook, edit roles/hooks/pre-apply.sh or post-apply.sh.
+# Both files are committed in this repo as no-op examples.
+#
+# Common pre-apply hook uses:
+#   - Sign in to 1Password CLI:  op signin
+#   - Unlock pass:               pass git pull
+#   - Pull latest secrets
+#
+# Common post-apply hook uses:
+#   - Restart shell:             exec $SHELL
+#   - Send a notification
+#   - Run a custom validation script

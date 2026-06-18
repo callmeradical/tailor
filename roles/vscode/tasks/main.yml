@@ -1,0 +1,61 @@
+---
+# roles/vscode/tasks/main.yml
+# Installs VS Code extensions listed in vscode_extensions.
+#
+# This role gracefully skips if:
+#   - vscode_extensions is empty, OR
+#   - the `code` CLI is not found in PATH.
+#
+# To activate: add extension IDs to vscode_extensions in group_vars/all.yml.
+
+# ── Guard: check if code CLI is available ─────────────────────────────────────
+- name: Check if VS Code CLI (code) is available
+  ansible.builtin.command:
+    cmd: which {{ vscode_cli }}
+  register: vscode_cli_check
+  changed_when: false
+  failed_when: false   # non-zero exit is fine — we just won't install extensions
+
+- name: Warn when VS Code CLI is not found
+  ansible.builtin.debug:
+    msg: >-
+      VS Code CLI '{{ vscode_cli }}' not found in PATH.
+      Install VS Code and run 'Shell Command: Install code in PATH' from the Command Palette,
+      then re-run tailor apply to install extensions.
+  when: vscode_cli_check.rc != 0
+
+# ── Guard: skip when extension list is empty ──────────────────────────────────
+- name: Skip VS Code extensions (list is empty)
+  ansible.builtin.debug:
+    msg: "vscode_extensions is empty — skipping. Add extension IDs to group_vars/all.yml to activate."
+  when:
+    - vscode_cli_check.rc == 0
+    - vscode_extensions | length == 0
+
+# ── Install extensions ────────────────────────────────────────────────────────
+- name: Install VS Code extensions
+  ansible.builtin.command:
+    cmd: "{{ vscode_cli }} --install-extension {{ item }} --force"
+  loop: "{{ vscode_extensions }}"
+  when:
+    - vscode_cli_check.rc == 0
+    - vscode_extensions | length > 0
+  changed_when: true   # `code --install-extension` does not report idempotency
+
+# Example: install a curated set of extensions for Python development
+# vscode_extensions:
+#   - ms-python.python          # Python language support
+#   - ms-python.debugpy         # Python debugger
+#   - ms-python.black-formatter # Black code formatter
+#   - ms-toolsai.jupyter        # Jupyter notebooks
+
+# Example: install extensions for web development
+# vscode_extensions:
+#   - esbenp.prettier-vscode    # Prettier formatter
+#   - dbaeumer.vscode-eslint    # ESLint integration
+#   - ms-vscode.vscode-typescript-next  # Latest TypeScript
+#   - bradlc.vscode-tailwindcss # Tailwind CSS IntelliSense
+
+# Example: install extensions for Go development
+# vscode_extensions:
+#   - golang.go                 # Go language support (official)

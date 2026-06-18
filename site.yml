@@ -1,0 +1,47 @@
+---
+# Tailor — Main Playbook
+# Applies all declared roles to localhost.
+#
+# Usage:
+#   tailor apply                 # apply everything
+#   tailor apply --check         # dry-run, no changes
+#   tailor apply --role packages # apply a single role
+#   ansible-playbook site.yml    # run directly with Ansible
+#
+# To enable or disable a role, comment/uncomment its entry in the roles list.
+
+- name: Configure local machine
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  roles:
+    # ── Lifecycle hooks ────────────────────────────────────────────────────
+    # Runs roles/hooks/pre-apply.sh before anything else (no-op if absent).
+    - role: hooks
+      vars:
+        hooks_phase: pre
+
+    # ── Package management ─────────────────────────────────────────────────
+    # Installs Homebrew formulae and casks declared in group_vars/all.yml.
+    - packages
+
+    # ── Dotfiles ───────────────────────────────────────────────────────────
+    # Clones your dotfiles repo and runs its installer script.
+    # Set dotfiles_repo_url in group_vars/all.yml to activate.
+    - dotfiles
+
+    # ── macOS preferences ──────────────────────────────────────────────────
+    # Applies system defaults: dock, keyboard, trackpad, screenshots, etc.
+    - macos-prefs
+
+    # ── VS Code extensions ─────────────────────────────────────────────────
+    # Installs extensions listed in vscode_extensions (group_vars/all.yml).
+    # Skipped automatically if the `code` CLI is not found.
+    - vscode
+
+    # ── Lifecycle hooks ────────────────────────────────────────────────────
+    # Runs roles/hooks/post-apply.sh after everything else (no-op if absent).
+    - role: hooks
+      vars:
+        hooks_phase: post
