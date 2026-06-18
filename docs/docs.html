@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tailor documentation — installation, configuration, and CLI reference.">
+  <title>Docs — Tailor</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .docs-layout { grid-template-columns: 1fr; gap: 2rem; }
+      .docs-sidebar { display: none; }
+    }
+
+    .docs-sidebar {
+      position: sticky;
+      top: 72px;
+    }
+
+    .docs-sidebar ul {
+      list-style: none;
+    }
+
+    .docs-sidebar li { margin-bottom: 0.125rem; }
+
+    .docs-sidebar a {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .docs-sidebar a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+    .docs-sidebar .sidebar-heading {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 0.75rem 0.75rem 0.25rem;
+      font-weight: 600;
+    }
+
+    .docs-content h2 {
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      margin-bottom: 0.75rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .docs-content h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .docs-content h3 {
+      font-size: 1.125rem;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .docs-content p {
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 1rem;
+    }
+
+    .docs-content ul, .docs-content ol {
+      color: var(--text-muted);
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      line-height: 1.75;
+    }
+
+    .docs-content li { margin-bottom: 0.25rem; }
+
+    .docs-content pre { margin-bottom: 1.25rem; }
+
+    .callout {
+      background: var(--bg-alt);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .callout strong { color: var(--text); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">tail<span>or</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html#features">Features</a></li>
+    <li><a href="index.html#commands">Commands</a></li>
+    <li><a href="docs.html" style="color:var(--text)">Docs</a></li>
+    <li><a href="https://github.com/callmeradical/tailor" class="nav-cta">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="docs-layout">
+
+  <!-- sidebar -->
+  <aside class="docs-sidebar">
+    <div class="sidebar-heading">Getting Started</div>
+    <ul>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#bootstrap">Bootstrap</a></li>
+      <li><a href="#first-apply">First apply</a></li>
+    </ul>
+    <div class="sidebar-heading">Configuration</div>
+    <ul>
+      <li><a href="#config-structure">Repo structure</a></li>
+      <li><a href="#group-vars">group_vars/all.yml</a></li>
+      <li><a href="#packages">Packages</a></li>
+      <li><a href="#dotfiles">Dotfiles</a></li>
+      <li><a href="#macos-prefs">macOS prefs</a></li>
+      <li><a href="#vscode">VS Code</a></li>
+      <li><a href="#hooks">Hooks</a></li>
+    </ul>
+    <div class="sidebar-heading">CLI</div>
+    <ul>
+      <li><a href="#cli-apply">apply</a></li>
+      <li><a href="#cli-adopt">adopt</a></li>
+      <li><a href="#cli-validate">validate</a></li>
+      <li><a href="#cli-usage">--usage</a></li>
+    </ul>
+    <div class="sidebar-heading">Guides</div>
+    <ul>
+      <li><a href="#new-machine">New machine</a></li>
+      <li><a href="#daily-workflow">Daily workflow</a></li>
+      <li><a href="#agents">Using with AI agents</a></li>
+    </ul>
+  </aside>
+
+  <!-- content -->
+  <main class="docs-content">
+
+    <h2 id="requirements">Requirements</h2>
+    <p>Tailor targets macOS. Linux works for most roles. Windows is out of scope.</p>
+    <ul>
+      <li>macOS 12 Monterey or later (earlier may work, untested)</li>
+      <li>Xcode Command Line Tools (<code>xcode-select --install</code>)</li>
+      <li>Ansible 2.14+ (<code>pip3 install ansible</code> or <code>brew install ansible</code>)</li>
+      <li><code>community.general</code> collection (<code>ansible-galaxy collection install community.general</code>)</li>
+    </ul>
+    <p>The bootstrap script handles all of this automatically.</p>
+
+    <h2 id="bootstrap">Bootstrap</h2>
+    <p>On a fresh machine, run one command:</p>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/callmeradical/tailor/main/install.sh \
+  | bash -s -- https://github.com/yourname/tailor-config.git</code></pre>
+    <p>This will:</p>
+    <ol>
+      <li>Install Xcode Command Line Tools (if missing)</li>
+      <li>Install Homebrew (if missing)</li>
+      <li>Install Ansible via <code>pip3</code></li>
+      <li>Install the <code>community.general</code> Ansible collection</li>
+      <li>Clone your config repo to <code>~/.config/tailor</code></li>
+      <li>Run <code>tailor apply</code></li>
+    </ol>
+    <div class="callout">
+      <strong>Idempotent.</strong> Safe to re-run on an already-configured machine. Only drift gets fixed.
+    </div>
+    <p>You can override the config directory:</p>
+    <pre><code>TAILOR_CONFIG_DIR=~/my-config curl -fsSL ... | bash -s -- &lt;repo-url&gt;</code></pre>
+
+    <h2 id="first-apply">First apply</h2>
+    <p>Once bootstrapped, apply at any time:</p>
+    <pre><code># Dry-run first — see what would change
+tailor apply --check
+
+# Apply for real
+tailor apply</code></pre>
+
+    <h2 id="config-structure">Repo structure</h2>
+    <p>Your config repo is a standard Ansible project. Fork the starter or create your own:</p>
+    <pre><code>~/.config/tailor/
+  site.yml             # main playbook — lists all roles
+  group_vars/
+    all.yml            # your config: packages, dotfiles url, prefs
+  requirements.yml     # ansible-galaxy collection deps
+  roles/
+    packages/          # homebrew formulae + casks
+    dotfiles/          # dotfiles repo clone + installer
+    macos-prefs/       # osx_defaults tasks
+    vscode/            # vs code extensions
+    hooks/             # pre/post apply shell scripts</code></pre>
+    <p>You can add your own roles, pull from Ansible Galaxy, or write custom tasks directly in <code>site.yml</code>. It's just Ansible.</p>
+
+    <h2 id="group-vars">group_vars/all.yml</h2>
+    <p>This is your primary config file. All roles read their variables from here.</p>
+    <pre><code># Packages
+homebrew_packages:
+  - git
+  - ripgrep
+  - fd
+  - fzf
+  - gh
+
+homebrew_casks:
+  - iterm2
+  - visual-studio-code
+  - 1password
+
+# Dotfiles
+dotfiles_repo_url: "https://github.com/yourname/dotfiles.git"
+dotfiles_dest: "{{ ansible_facts['env']['HOME'] }}/dotfiles"
+dotfiles_installer: "install.sh"  # set to "" to skip
+
+# macOS preferences (override role defaults)
+macos_dock_autohide: true
+macos_dock_tilesize: 48
+macos_key_repeat: 2
+macos_initial_key_repeat: 15
+macos_trackpad_tap_to_click: true
+
+# VS Code extensions
+vscode_extensions:
+  - vscodevim.vim
+  - eamodio.gitlens
+  - esbenp.prettier-vscode</code></pre>
+
+    <h2 id="packages">Packages</h2>
+    <p>The <code>packages</code> role installs Homebrew formulae, casks, and taps.</p>
+    <pre><code>homebrew_packages:       # brew install
+  - git
+  - ripgrep
+
+homebrew_casks:          # brew install --cask
+  - visual-studio-code
+
+homebrew_taps:           # brew tap
+  - homebrew/cask-fonts</code></pre>
+    <p>To add a package you installed manually:</p>
+    <pre><code>tailor adopt brew ripgrep</code></pre>
+
+    <h2 id="dotfiles">Dotfiles</h2>
+    <p>The <code>dotfiles</code> role clones your existing dotfiles repo and runs its installer. It does not manage dotfile content — it integrates with whatever setup you already have.</p>
+    <pre><code>dotfiles_repo_url: "https://github.com/yourname/dotfiles.git"
+dotfiles_dest: "{{ ansible_facts['env']['HOME'] }}/dotfiles"
+dotfiles_installer: "install.sh"  # relative to dotfiles_dest, "" to skip</code></pre>
+    <p>Leave <code>dotfiles_repo_url</code> empty (<code>""</code>) to skip the role entirely.</p>
+    <p>To register an existing config file:</p>
+    <pre><code>tailor adopt file ~/.gitconfig</code></pre>
+    <p>This copies the file into <code>roles/dotfiles/files/</code> and adds a symlink task. Files starting with <code>.</code> are linked to <code>~/&lt;filename&gt;</code>; others to <code>~/.config/&lt;filename&gt;</code>.</p>
+
+    <h2 id="macos-prefs">macOS preferences</h2>
+    <p>The <code>macos-prefs</code> role applies system defaults using Ansible's <code>osx_defaults</code> module. Override any default in <code>group_vars/all.yml</code>.</p>
+    <table>
+      <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>macos_dock_autohide</code></td><td><code>true</code></td><td>Auto-hide the Dock</td></tr>
+      <tr><td><code>macos_dock_tilesize</code></td><td><code>48</code></td><td>Dock icon size (px)</td></tr>
+      <tr><td><code>macos_key_repeat</code></td><td><code>2</code></td><td>Key repeat rate (1=fastest)</td></tr>
+      <tr><td><code>macos_initial_key_repeat</code></td><td><code>15</code></td><td>Delay before repeat</td></tr>
+      <tr><td><code>macos_trackpad_tap_to_click</code></td><td><code>true</code></td><td>Tap to click</td></tr>
+      <tr><td><code>macos_screenshot_location</code></td><td><code>~/Desktop</code></td><td>Screenshot save location</td></tr>
+    </table>
+    <p>Apply only this role:</p>
+    <pre><code>tailor apply --role macos-prefs</code></pre>
+
+    <h2 id="vscode">VS Code</h2>
+    <p>The <code>vscode</code> role installs extensions by their Marketplace ID. Skips gracefully if <code>code</code> is not on <code>$PATH</code>.</p>
+    <pre><code>vscode_extensions:
+  - vscodevim.vim
+  - eamodio.gitlens
+  - ms-python.python</code></pre>
+    <p>To get IDs for your current extensions:</p>
+    <pre><code>code --list-extensions</code></pre>
+
+    <h2 id="hooks">Hooks</h2>
+    <p>Place shell scripts in <code>roles/hooks/</code> to run before or after the apply:</p>
+    <pre><code>roles/hooks/pre-apply.sh   # runs before all roles
+roles/hooks/post-apply.sh  # runs after all roles</code></pre>
+    <p>Both are no-ops if absent. Use hooks to sign in to 1Password, source secrets, or run anything Ansible doesn't cover.</p>
+    <pre><code>#!/bin/sh
+# roles/hooks/pre-apply.sh — example: sign in to 1Password
+eval $(op signin)</code></pre>
+
+    <h2 id="cli-apply">tailor apply</h2>
+    <pre><code>tailor apply [--check] [--role &lt;name&gt;] [--verbose]</code></pre>
+    <table>
+      <tr><th>Flag</th><th>Description</th></tr>
+      <tr><td><code>--check</code></td><td>Dry-run. Shows what would change. No system modifications.</td></tr>
+      <tr><td><code>--role &lt;name&gt;</code></td><td>Apply a single role by tag. e.g. <code>packages</code>, <code>macos-prefs</code></td></tr>
+      <tr><td><code>--verbose</code></td><td>Pass <code>-v</code> to Ansible for verbose output.</td></tr>
+    </table>
+
+    <h2 id="cli-adopt">tailor adopt</h2>
+    <pre><code>tailor adopt brew &lt;package&gt;
+tailor adopt file &lt;path&gt;</code></pre>
+    <p>Captures a single ad-hoc change back into the declared config. Always opens the modified file in <code>$EDITOR</code> for review. Idempotent — running twice has no effect.</p>
+    <div class="callout">
+      <strong>Workflow:</strong> Install something manually → adopt it → commit the change to git.
+    </div>
+
+    <h2 id="cli-validate">tailor validate</h2>
+    <pre><code>tailor validate</code></pre>
+    <p>Syntax-checks the playbook using <code>ansible-playbook --syntax-check</code>. Parse-only — no task evaluation, no system changes. Use before applying after editing roles.</p>
+
+    <h2 id="cli-usage">tailor --usage</h2>
+    <pre><code>tailor --usage</code></pre>
+    <p>Prints a structured agent-oriented briefing: config location, key variables, role reference, and workflow. Designed to be consumed by AI agents and automation tools at session start.</p>
+    <pre><code># Example: orient an agent
+tailor --usage | head -40</code></pre>
+
+    <h2 id="new-machine">Guide: New machine</h2>
+    <ol>
+      <li>Open a terminal.</li>
+      <li>Run the bootstrap command with your config repo URL.</li>
+      <li>Wait. Tailor installs Ansible, clones your config, and applies it.</li>
+      <li>Source your shell environment if your dotfiles installer added anything to <code>~/.zshrc</code>.</li>
+      <li>Done.</li>
+    </ol>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/callmeradical/tailor/main/install.sh \
+  | bash -s -- https://github.com/yourname/tailor-config.git</code></pre>
+
+    <h2 id="daily-workflow">Guide: Daily workflow</h2>
+    <pre><code># Installed something you want to keep? Adopt it.
+brew install ripgrep
+tailor adopt brew ripgrep
+cd ~/.config/tailor && git add -A && git commit -m "adopt: ripgrep"
+
+# Edited a config file? Version-control it.
+tailor adopt file ~/.gitconfig
+cd ~/.config/tailor && git add -A && git commit -m "adopt: .gitconfig"
+
+# Changed prefs? Update group_vars/all.yml and apply.
+# Edit ~/.config/tailor/group_vars/all.yml ...
+tailor apply --role macos-prefs
+
+# Keep two machines in sync.
+cd ~/.config/tailor && git pull
+tailor apply</code></pre>
+
+    <h2 id="agents">Guide: Using with AI agents</h2>
+    <p>Tailor ships a machine-readable briefing command for AI agents and automation tools.</p>
+    <pre><code># Orient an agent at session start
+tailor --usage</code></pre>
+    <p>The output covers: config file location, all key variables with current defaults, role reference, adopt workflow, and which commands are safe to run without system changes.</p>
+    <p>Safe commands (no system modifications):</p>
+    <ul>
+      <li><code>tailor apply --check</code> — dry-run diff</li>
+      <li><code>tailor validate</code> — syntax check only</li>
+      <li><code>tailor --usage</code> — this briefing</li>
+      <li><code>cat ~/.config/tailor/group_vars/all.yml</code> — read current config</li>
+    </ul>
+    <p>Commands that modify the system:</p>
+    <ul>
+      <li><code>tailor apply</code> — installs packages, applies prefs</li>
+      <li><code>tailor adopt brew &lt;pkg&gt;</code> — writes to config file</li>
+      <li><code>tailor adopt file &lt;path&gt;</code> — copies file, writes to config</li>
+    </ul>
+
+  </main>
+</div>
+
+<footer>
+  <p>Tailor · MIT License · <a href="https://github.com/callmeradical/tailor">github.com/callmeradical/tailor</a></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+title: Tailor
+description: Personal machine configuration management. Ansible-native.
+url: "https://callmeradical.github.io"
+baseurl: "/tailor"

@@ -25,6 +25,9 @@
 #   adopt file <path>
 #       Register an existing config file into the dotfiles role.
 #
+#   usage, --usage
+#       Print agent-oriented usage instructions (machine-readable briefing)
+#
 #   help, --help, -h
 #       Show this help text
 #
@@ -92,6 +95,9 @@ Commands:
       Add an already-installed Homebrew package to the declared config
   adopt file <path>
       Register an existing config file into the dotfiles role
+
+  usage, --usage
+      Print agent-oriented usage instructions
 
   help, --help, -h
       Show this message
@@ -161,6 +167,84 @@ cmd_adopt() {
 }
 
 # ---------------------------------------------------------------------------
+cmd_usage() {
+  config_dir="${TAILOR_CONFIG_DIR:-$HOME/.config/tailor}"
+  cat <<EOF
+TAILOR — Personal Machine Configuration Manager
+================================================
+Ansible-native. Bootstrap from zero with one command. Declare your machine
+state in a git repo; tailor converges your machine to match it.
+
+AGENT QUICK-START
+-----------------
+1. Read the config:         cat $config_dir/group_vars/all.yml
+2. Dry-run (safe, no changes):  tailor apply --check
+3. Apply everything:        tailor apply
+4. Apply one role:          tailor apply --role packages
+5. Check syntax only:       tailor validate
+6. Capture a brew package:  tailor adopt brew <package>
+7. Capture a config file:   tailor adopt file <path>
+
+CONFIG LOCATION
+---------------
+  $config_dir/
+    group_vars/all.yml   — primary config (packages, dotfiles url, prefs)
+    site.yml             — main Ansible playbook (do not edit unless extending)
+    roles/
+      packages/          — Homebrew formulae + casks
+      dotfiles/          — dotfiles repo clone + installer
+      macos-prefs/       — osx_defaults (dock, keyboard, trackpad, screenshots)
+      vscode/            — VS Code extensions
+      hooks/             — pre/post apply shell scripts
+
+KEY VARIABLES (group_vars/all.yml)
+-----------------------------------
+  homebrew_packages: [...]     — list of brew formulae to install
+  homebrew_casks: [...]        — list of brew cask apps to install
+  dotfiles_repo_url: "..."     — git URL of dotfiles repo (empty = skip)
+  vscode_extensions: [...]     — VS Code extension IDs (empty = skip)
+  macos_dock_autohide: true    — autohide dock
+  macos_dock_tilesize: 48      — dock icon size in pixels
+  macos_key_repeat: 2          — key repeat rate (1=fastest)
+  macos_initial_key_repeat: 15 — initial key repeat delay
+  macos_trackpad_tap_to_click: true
+  macos_screenshot_location: ~/Desktop
+
+ROLES (use with --role flag)
+-----------------------------
+  packages   — install Homebrew formulae and casks
+  dotfiles   — clone dotfiles repo and run its installer
+  macos-prefs / prefs — apply macOS system preferences
+  vscode     — install VS Code extensions
+  hooks      — run pre/post shell scripts (no-op if scripts absent)
+
+ADOPT WORKFLOW (capture ad-hoc changes)
+----------------------------------------
+  # You installed something manually — declare it:
+  brew install ripgrep
+  tailor adopt brew ripgrep
+
+  # You edited a config file — version-control it:
+  tailor adopt file ~/.gitconfig
+
+  Both commands are idempotent and open the modified file in \$EDITOR.
+
+ENVIRONMENT
+-----------
+  TAILOR_CONFIG_DIR   Override config repo location (default: ~/.config/tailor)
+  EDITOR              Editor for adopt command (default: vi)
+
+SAFE OPERATIONS (no system changes)
+-------------------------------------
+  tailor apply --check     — always safe, shows diff only
+  tailor validate          — syntax check, never touches system
+  tailor --usage           — this output
+
+DOCS: https://callmeradical.github.io/tailor
+EOF
+}
+
+# ---------------------------------------------------------------------------
 cmd_validate() {
   echo "tailor: validating (syntax-check) $PLAYBOOK_DIR/site.yml" >&2
   ansible-playbook --syntax-check -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
@@ -179,6 +263,8 @@ case "$cmd" in
     cmd_validate ;;
   adopt)
     cmd_adopt "$@" ;;
+  usage|--usage)
+    cmd_usage ;;
   help|--help|-h)
     usage ;;
   "")

@@ -1,90 +1,95 @@
 # Tailor
 
-A minimal, Ansible-native personal machine configuration manager. Declare your tools, preferences, and dotfiles in a git repo — apply them to any Mac with a single command.
+**Personal machine configuration management. Ansible-native. Bootstrap from zero with one command.**
+
+Tailor is a declarative system configuration manager for macOS (and Linux) inspired by [Boxen](https://github.com/boxen/our-boxen). You maintain a git repository of Ansible roles that describes how your machine should look. Tailor wraps Ansible with a simple CLI and a `tailor adopt` command that captures ad-hoc changes back into your declared config.
+
+Switch laptops. Run one command. Done.
+
+---
+
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/callmeradical/tailor/main/install.sh | bash -s -- https://github.com/yourname/tailor-config.git
+```
+
+This installs Ansible, clones your config repo to `~/.config/tailor`, and runs the first apply.
+
+---
+
+## Usage
+
+```sh
+tailor apply                   # converge machine to declared state
+tailor apply --check           # dry-run — show what would change
+tailor apply --role packages   # apply a single role
+tailor validate                # syntax-check the playbook
+tailor adopt brew ripgrep      # add an installed package to your config
+tailor adopt file ~/.zshrc     # register a config file into dotfiles role
+```
+
+---
+
+## What you get
+
+A starter repo with five ready-to-configure roles:
+
+| Role | What it does |
+|---|---|
+| `packages` | Homebrew formulae and casks |
+| `dotfiles` | Clones your dotfiles repo and runs its installer |
+| `macos-prefs` | Dock, keyboard, trackpad, screenshots via `osx_defaults` |
+| `vscode` | VS Code extensions |
+| `hooks` | Shell scripts run before and after apply |
+
+Configure everything in `group_vars/all.yml`. The config repo is a standard Ansible project — no new DSL to learn.
+
+---
+
+## Adopt
+
+The `tailor adopt` command captures ad-hoc changes back into your declared config — one item at a time.
+
+```sh
+# You installed something manually. Now declare it:
+brew install ripgrep
+tailor adopt brew ripgrep
+
+# You edited a config file. Now version-control it:
+tailor adopt file ~/.gitconfig
+```
+
+Both are idempotent. Both open the modified file in `$EDITOR` so you can review before committing.
+
+---
 
 ## How it works
 
-Tailor is a thin shell wrapper around `ansible-playbook`. Your config lives in `~/.config/tailor` (this repo). Running `tailor apply` converges your machine to its declared state.
+Tailor is a thin shell wrapper around `ansible-playbook`. The config repo is a valid Ansible project — `site.yml`, `roles/`, `group_vars/`. You can run `ansible-playbook site.yml` directly if you want. Tailor adds:
 
-## Quick start
+- A friendlier CLI (`apply`, `check`, `validate`, `adopt`)
+- Dev-worktree detection (works in the repo root during development)
+- A curated starter template with commented examples
 
-### Prerequisites
+---
 
-```bash
-# Install Homebrew (https://brew.sh) then Ansible
-brew install ansible
+## Requirements
 
-# Install the community.general collection (provides homebrew module)
-ansible-galaxy collection install community.general
-```
+- macOS (Linux supported, Windows out of scope)
+- Ansible (`pip3 install ansible` or `brew install ansible`)
+- `community.general` collection (`ansible-galaxy collection install community.general`)
 
-### Deploy
+The `install.sh` bootstrap script handles all of this.
 
-```bash
-# Clone this repo to the expected config location
-git clone <your-fork-url> ~/.config/tailor
+---
 
-# (Optional) Make tailor available on your PATH
-ln -sf ~/.config/tailor/bin/tailor /usr/local/bin/tailor
-```
+## Documentation
 
-### Apply your config
+Full documentation at **[callmeradical.github.io/tailor](https://callmeradical.github.io/tailor)**
 
-```bash
-# Dry-run — preview what would change, make no modifications
-tailor apply --check
+---
 
-# Apply for real
-tailor apply
+## License
 
-# Validate playbook syntax only
-tailor validate
-```
-
-## Repo structure
-
-```
-site.yml              # Main playbook — includes all roles
-bin/tailor            # CLI wrapper
-roles/
-  packages/           # Homebrew formulae (community.general.homebrew)
-    defaults/main.yml # List of packages to install
-    tasks/main.yml    # Install tasks
-tests/
-  test_tracer.sh      # Tracer bullet smoke test
-```
-
-## Declaring packages
-
-Edit `roles/packages/defaults/main.yml`:
-
-```yaml
-homebrew_packages:
-  - tree
-  - ripgrep
-  - gh
-  - jq
-```
-
-Then run `tailor apply` to converge.
-
-## Configuration
-
-| Variable | Default | Description |
-|---|---|---|
-| `TAILOR_CONFIG_DIR` | `~/.config/tailor` | Path to the config repo |
-
-## Running the test suite
-
-```bash
-bash tests/test_tracer.sh
-```
-
-## Development (worktree)
-
-When running `bin/tailor` from inside the repo directory (e.g., a git worktree during development), the script automatically uses `site.yml` from the repo root instead of `~/.config/tailor`. No symlinks needed for local iteration.
-
-```bash
-cd /path/to/tailor-worktree
-bash bin/tailor apply --check   # uses ./site.yml
-```
+MIT

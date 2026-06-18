@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tailor — Personal machine configuration management. Ansible-native. Bootstrap from zero with one command.">
+  <title>Tailor — Personal Machine Configuration</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">tail<span>or</span></span>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="docs.html">Docs</a></li>
+    <li><a href="https://github.com/callmeradical/tailor" class="nav-cta">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-badge">Ansible-native · Inspired by Boxen</div>
+  <h1>Your machine.<br><em>Declared.</em></h1>
+  <p>
+    Tailor is a personal machine configuration manager built on Ansible.
+    Declare your packages, dotfiles, and macOS preferences in a git repo.
+    Bootstrap a new machine in minutes, not hours.
+  </p>
+
+  <div class="install-block">
+    <span class="prompt">$</span>
+    <code>curl -fsSL https://raw.githubusercontent.com/callmeradical/tailor/main/install.sh | bash -s -- &lt;your-config-repo&gt;</code>
+  </div>
+
+  <div class="hero-actions">
+    <a href="docs.html" class="btn btn-primary">Get started</a>
+    <a href="https://github.com/callmeradical/tailor" class="btn btn-secondary">View on GitHub</a>
+  </div>
+</div>
+
+<!-- ── Terminal demo ─────────────────────────────────────────────────────── -->
+<div class="terminal-wrap">
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+      <span class="terminal-title">tailor apply --check</span>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">$</span> <span class="t-cmd">tailor apply --check</span></div>
+      <div class="t-comment"># dry-run — no changes made</div>
+      <br>
+      <div><span class="t-ok">ok</span>     [localhost] hooks : pre-apply hook not found, skipping</div>
+      <div><span class="t-change">changed</span> [localhost] packages : Install ripgrep</div>
+      <div><span class="t-change">changed</span> [localhost] packages : Install fd</div>
+      <div><span class="t-ok">ok</span>     [localhost] packages : Install git</div>
+      <div><span class="t-ok">ok</span>     [localhost] dotfiles : Clone dotfiles repo</div>
+      <div><span class="t-change">changed</span> [localhost] macos-prefs : Dock — set icon size</div>
+      <div><span class="t-change">changed</span> [localhost] macos-prefs : Keyboard — set key repeat rate</div>
+      <div><span class="t-ok">ok</span>     [localhost] macos-prefs : Trackpad — enable tap-to-click</div>
+      <div><span class="t-skip">skip</span>   [localhost] vscode : vscode_extensions is empty</div>
+      <br>
+      <div class="t-comment">localhost : ok=9  changed=4  skipped=1  failed=0</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Features ──────────────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="section-label">Why Tailor</div>
+  <h2>Everything you need.<br>Nothing you don't.</h2>
+  <p class="section-intro">
+    Tailor handles the setup work that costs you a day every time you switch machines.
+  </p>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>One-command bootstrap</h3>
+      <p>A single <code>curl</code> command installs Ansible, clones your config, and applies it. Go from unboxed to productive in minutes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📦</div>
+      <h3>Ansible-native</h3>
+      <p>No new DSL. Your config repo is a valid Ansible project. Use any Ansible module, role, or collection — the full ecosystem is available.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔄</div>
+      <h3>Idempotent by design</h3>
+      <p>Run <code>tailor apply</code> as often as you like. Already-correct state is untouched. Only drift gets fixed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🪄</div>
+      <h3>Adopt ad-hoc changes</h3>
+      <p><code>tailor adopt brew ripgrep</code> captures what you installed manually back into your declared config — one package at a time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>Safe dry-run</h3>
+      <p><code>tailor apply --check</code> shows exactly what would change without touching your machine. Always safe to run.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <h3>Version-controlled config</h3>
+      <p>Your entire machine configuration lives in a git repo. Full history, diffs, rollbacks, and sharing — all included.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── How it works ──────────────────────────────────────────────────────── -->
+<section id="how-it-works">
+  <div class="section-label">How it works</div>
+  <h2>Ansible under the hood.<br>Tailor on top.</h2>
+  <p class="section-intro">
+    Tailor wraps <code>ansible-playbook</code> with a friendlier CLI and a curated starter template. Your config repo is the source of truth.
+  </p>
+
+  <div class="roles-grid">
+    <div class="role-card">
+      <div class="role-name">packages</div>
+      <p>Installs Homebrew formulae and casks declared in <code>group_vars/all.yml</code>. Supports taps.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-name">dotfiles</div>
+      <p>Clones your existing dotfiles repo and runs its installer. Works with any dotfiles setup — no migration needed.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-name">macos-prefs</div>
+      <p>Applies macOS system preferences via <code>osx_defaults</code>: dock, keyboard repeat, trackpad, screenshots, and more.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-name">vscode</div>
+      <p>Installs VS Code extensions by ID. Skips gracefully if the <code>code</code> CLI is not installed.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-name">hooks</div>
+      <p>Runs <code>pre-apply.sh</code> and <code>post-apply.sh</code> shell scripts around the apply lifecycle. No-op if absent.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-name">your roles</div>
+      <p>It's just Ansible. Add your own roles, pull from Ansible Galaxy, or write custom tasks — no restrictions.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── Commands ──────────────────────────────────────────────────────────── -->
+<section id="commands">
+  <div class="section-label">CLI Reference</div>
+  <h2>Simple commands.<br>Powerful results.</h2>
+  <p class="section-intro">All commands are thin wrappers around Ansible. Nothing magic.</p>
+
+  <div class="commands">
+    <div class="command-row">
+      <div class="command-syntax">tailor apply</div>
+      <div class="command-desc">Converge your machine to its declared state. Runs <code>ansible-playbook site.yml</code> against localhost.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor apply <span class="flag">--check</span></div>
+      <div class="command-desc">Dry-run. Shows exactly what would change without touching anything. Always safe.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor apply <span class="flag">--role &lt;name&gt;</span></div>
+      <div class="command-desc">Apply a single role by tag name. e.g. <code>--role packages</code> or <code>--role macos-prefs</code>.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor validate</div>
+      <div class="command-desc">Syntax-check the playbook. Parse-only — no task evaluation, no system changes.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor adopt brew <span class="flag">&lt;package&gt;</span></div>
+      <div class="command-desc">Add an already-installed Homebrew package to <code>group_vars/all.yml</code>. Idempotent. Opens file in <code>$EDITOR</code>.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor adopt file <span class="flag">&lt;path&gt;</span></div>
+      <div class="command-desc">Copy a config file into the dotfiles role and register a symlink task. Idempotent. Opens task file in <code>$EDITOR</code>.</div>
+    </div>
+    <div class="command-row">
+      <div class="command-syntax">tailor --usage</div>
+      <div class="command-desc">Print an agent-oriented briefing — structured usage instructions for AI agents and automation tools.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── CTA ───────────────────────────────────────────────────────────────── -->
+<div class="cta-banner">
+  <h2>Ready to declare your machine?</h2>
+  <p>Fork the starter config, set your packages and dotfiles URL, and run one command.</p>
+  <div class="hero-actions">
+    <a href="docs.html" class="btn btn-primary">Read the docs</a>
+    <a href="https://github.com/callmeradical/tailor" class="btn btn-secondary">GitHub</a>
+  </div>
+</div>
+
+<footer>
+  <p>Tailor · MIT License · <a href="https://github.com/callmeradical/tailor">github.com/callmeradical/tailor</a></p>
+</footer>
+
+</body>
+</html>
