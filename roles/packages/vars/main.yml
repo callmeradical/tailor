@@ -1,0 +1,15 @@
+---
+# Homebrew packages (formulae) to install.
+# Add packages via: tailor adopt brew <package>
+homebrew_packages:
+  - git
+  - curl
+  # - ripgrep
+  # - fzf
+  # - jq
+
+# Homebrew casks (GUI apps) to install.
+homebrew_casks: []
+  # - visual-studio-code
+  # - iterm2
+  # - 1password

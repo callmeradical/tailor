@@ -19,11 +19,18 @@
 #   check
 #       Alias for: apply --check
 #
+#   adopt brew <package>
+#       Add an already-installed Homebrew package to the declared config.
+#
+#   adopt file <path>
+#       Register an existing config file into the dotfiles role.
+#
 #   help, --help, -h
 #       Show this help text
 #
 # Environment:
 #   TAILOR_CONFIG_DIR  Config repo location (default: ~/.config/tailor)
+#   EDITOR             Editor opened after adopt writes (default: vi)
 #
 # Decisions:
 #   --role maps to ansible-playbook --tags <name> so that a single site.yml
@@ -51,6 +58,7 @@ TAILOR_CONFIG_DIR="${TAILOR_CONFIG_DIR:-$HOME/.config/tailor}"
 #      required during development.
 #   3. Fall back to TAILOR_CONFIG_DIR (production install).
 _script_dir="$(cd "$(dirname "$0")/.." && pwd)"
+_lib_dir="$_script_dir/lib"
 if [ "$_tailor_config_explicit" = "set" ]; then
   PLAYBOOK_DIR="$TAILOR_CONFIG_DIR"
 elif [ -f "$_script_dir/site.yml" ]; then
@@ -80,11 +88,17 @@ Commands:
   check
       Alias for: apply --check
 
+  adopt brew <package>
+      Add an already-installed Homebrew package to the declared config
+  adopt file <path>
+      Register an existing config file into the dotfiles role
+
   help, --help, -h
       Show this message
 
 Environment:
   TAILOR_CONFIG_DIR   Config repo location (default: ~/.config/tailor)
+  EDITOR              Editor opened after adopt writes (default: vi)
 EOF
 }
 
@@ -132,6 +146,21 @@ cmd_apply() {
 }
 
 # ---------------------------------------------------------------------------
+cmd_adopt() {
+  _subcommand="${1:-}"
+  shift || true
+  case "$_subcommand" in
+    brew|file)
+      sh "$_lib_dir/adopt.sh" "$_subcommand" "${1:-}"
+      ;;
+    "")
+      echo "tailor adopt: usage: tailor adopt <brew|file> <argument>" >&2; exit 1 ;;
+    *)
+      echo "tailor adopt: unknown subcommand '$_subcommand' (expected brew or file)" >&2; exit 1 ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
 cmd_validate() {
   echo "tailor: validating (syntax-check) $PLAYBOOK_DIR/site.yml" >&2
   ansible-playbook --syntax-check -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
@@ -148,6 +177,8 @@ case "$cmd" in
     cmd_apply --check "$@" ;;
   validate)
     cmd_validate ;;
+  adopt)
+    cmd_adopt "$@" ;;
   help|--help|-h)
     usage ;;
   "")
