@@ -1,0 +1,9 @@
+---
+# Dotfiles role — manages symlinks for config files.
+# Add files via: tailor adopt file <path>
+
+- name: Ensure ~/.config exists
+  file:
+    path: "{{ ansible_env.HOME }}/.config"
+    state: directory
+    mode: "0755"

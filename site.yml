@@ -1,0 +1,13 @@
+---
+# Tailor — main playbook
+# Run with: tailor apply
+# Dry-run:  tailor check
+
+- hosts: localhost
+  connection: local
+  gather_facts: true
+  roles:
+    - packages
+    - dotfiles
+    # - macos-prefs
+    # - vscode

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# tailor — Personal System Configuration Manager
+# Usage: tailor <command> [options]
+
+set -euo pipefail
+
+TAILOR_CONFIG_DIR="${TAILOR_CONFIG_DIR:-$HOME/.config/tailor}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
+
+die() { echo "error: $*" >&2; exit 1; }
+
+usage() {
+  cat << 'EOF'
+tailor — Personal System Configuration Manager
+
+Usage:
+  tailor apply [--check] [--role <name>] [--verbose]
+  tailor validate
+  tailor check
+  tailor adopt brew <package>
+  tailor adopt file <path>
+
+Commands:
+  apply       Converge machine to declared state (runs ansible-playbook)
+  validate    Syntax-check the playbook
+  check       Alias for apply --check (dry-run, shows diff)
+  adopt       Capture ad-hoc changes back into the config repo
+    brew      Add a Homebrew package to roles/packages/vars/main.yml
+    file      Register a config file into roles/dotfiles
+
+Environment:
+  TAILOR_CONFIG_DIR   Path to your tailor config repo (default: ~/.config/tailor)
+  EDITOR              Editor to open after adopt writes (default: vi)
+
+EOF
+}
+
+# ── adopt dispatch ───────────────────────────────────────────────────────────
+
+cmd_adopt() {
+  local subcommand="${1:-}"
+  shift || true
+  case "$subcommand" in
+    brew)
+      bash "$LIB_DIR/adopt.sh" brew "${1:-}"
+      ;;
+    file)
+      bash "$LIB_DIR/adopt.sh" file "${1:-}"
+      ;;
+    "")
+      die "usage: tailor adopt <brew|file> <argument>"
+      ;;
+    *)
+      die "unknown adopt subcommand: $subcommand (expected brew or file)"
+      ;;
+  esac
+}
+
+# ── apply / validate / check ─────────────────────────────────────────────────
+
+cmd_apply() {
+  local check_flag=""
+  local role_flag=""
+  local verbose_flag=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --check)    check_flag="--check"; shift ;;
+      --role)     role_flag="--limit $2"; shift 2 ;;
+      --verbose)  verbose_flag="-v"; shift ;;
+      *) die "unknown apply option: $1" ;;
+    esac
+  done
+
+  [ -d "$TAILOR_CONFIG_DIR" ] || die "config dir not found: $TAILOR_CONFIG_DIR — set TAILOR_CONFIG_DIR or run init"
+  [ -f "$TAILOR_CONFIG_DIR/site.yml" ] || die "site.yml not found in $TAILOR_CONFIG_DIR"
+
+  cd "$TAILOR_CONFIG_DIR"
+  # shellcheck disable=SC2086
+  ansible-playbook site.yml $check_flag $role_flag $verbose_flag
+}
+
+cmd_validate() {
+  [ -d "$TAILOR_CONFIG_DIR" ] || die "config dir not found: $TAILOR_CONFIG_DIR"
+  [ -f "$TAILOR_CONFIG_DIR/site.yml" ] || die "site.yml not found in $TAILOR_CONFIG_DIR"
+  cd "$TAILOR_CONFIG_DIR"
+  ansible-playbook --syntax-check site.yml
+}
+
+# ── main ─────────────────────────────────────────────────────────────────────
+
+COMMAND="${1:-}"
+shift || true
+
+case "$COMMAND" in
+  adopt)
+    cmd_adopt "$@"
+    ;;
+  apply)
+    cmd_apply "$@"
+    ;;
+  validate)
+    cmd_validate
+    ;;
+  check)
+    cmd_apply --check "$@"
+    ;;
+  help|--help|-h|"")
+    usage
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
