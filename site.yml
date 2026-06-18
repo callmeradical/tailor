@@ -24,21 +24,25 @@
 
     # ── Package management ─────────────────────────────────────────────────
     # Installs Homebrew formulae and casks declared in group_vars/all.yml.
-    - packages
+    - role: packages
+      tags: [packages]
 
     # ── Dotfiles ───────────────────────────────────────────────────────────
     # Clones your dotfiles repo and runs its installer script.
     # Set dotfiles_repo_url in group_vars/all.yml to activate.
-    - dotfiles
+    - role: dotfiles
+      tags: [dotfiles]
 
     # ── macOS preferences ──────────────────────────────────────────────────
     # Applies system defaults: dock, keyboard, trackpad, screenshots, etc.
-    - macos-prefs
+    - role: macos-prefs
+      tags: [macos-prefs, prefs]
 
     # ── VS Code extensions ─────────────────────────────────────────────────
     # Installs extensions listed in vscode_extensions (group_vars/all.yml).
     # Skipped automatically if the `code` CLI is not found.
-    - vscode
+    - role: vscode
+      tags: [vscode]
 
     # ── Lifecycle hooks ────────────────────────────────────────────────────
     # Runs roles/hooks/post-apply.sh after everything else (no-op if absent).
