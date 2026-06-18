@@ -26,7 +26,7 @@ macos_trackpad_tap_to_click: true
 
 # ── Screenshots ───────────────────────────────────────────────────────────────
 # Directory where screenshots are saved.
-macos_screenshot_location: "{{ ansible_env.HOME }}/Desktop"
+macos_screenshot_location: "{{ ansible_facts['env']['HOME'] }}/Desktop"
 
 # Screenshot format: "png", "jpg", "gif", "pdf", "tiff".
 # macos_screenshot_type: "png"
