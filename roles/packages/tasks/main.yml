@@ -1,7 +1,49 @@
 ---
-# Install Homebrew formulae declared in homebrew_packages.
-- name: Install Homebrew packages
+# roles/packages/tasks/main.yml
+# Installs Homebrew formulae and casks declared in group_vars/all.yml.
+#
+# Requires: community.general collection (see requirements.yml)
+# Module docs: https://docs.ansible.com/ansible/latest/collections/community/general/homebrew_module.html
+
+# ── Taps ──────────────────────────────────────────────────────────────────────
+- name: Add Homebrew taps
+  community.general.homebrew_tap:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ homebrew_taps }}"
+  when: homebrew_taps | length > 0
+
+# ── Formulae ──────────────────────────────────────────────────────────────────
+- name: Install Homebrew packages (formulae)
   community.general.homebrew:
     name: "{{ item }}"
     state: present
   loop: "{{ homebrew_packages }}"
+  when: homebrew_packages | length > 0
+
+# Example: install a package and upgrade it to the latest version
+# - name: Install and upgrade ripgrep
+#   community.general.homebrew:
+#     name: ripgrep
+#     state: latest
+
+# Example: install a package at a specific version via a tap
+# - name: Install terraform 1.7 from hashicorp tap
+#   community.general.homebrew:
+#     name: hashicorp/tap/terraform
+#     state: present
+
+# ── Casks ─────────────────────────────────────────────────────────────────────
+- name: Install Homebrew casks (GUI apps)
+  community.general.homebrew_cask:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ homebrew_casks }}"
+  when: homebrew_casks | length > 0
+
+# Example: install a cask and accept its license
+# - name: Install 1Password
+#   community.general.homebrew_cask:
+#     name: 1password
+#     state: present
+#     accept_external_apps: true

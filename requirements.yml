@@ -1,0 +1,18 @@
+---
+# Ansible Galaxy requirements
+# Install with: ansible-galaxy collection install -r requirements.yml
+#
+# community.general provides:
+#   - community.general.homebrew        (install Homebrew packages and casks)
+#   - community.general.homebrew_cask   (cask-specific module, optional)
+#   - community.general.osx_defaults    (manage macOS system preferences)
+#   - community.general.mac_defaults    (alias — same module, older name)
+
+collections:
+  - name: community.general
+    version: ">=8.0.0"
+
+# Uncomment to pin to an exact version for reproducibility:
+# collections:
+#   - name: community.general
+#     version: "9.2.0"

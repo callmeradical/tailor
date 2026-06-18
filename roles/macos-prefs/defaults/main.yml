@@ -1,0 +1,43 @@
+---
+# roles/macos-prefs/defaults/main.yml
+# Default macOS preference values applied by this role.
+# Override any of these in group_vars/all.yml.
+
+# ── Dock ──────────────────────────────────────────────────────────────────────
+# Automatically hide and show the Dock.
+macos_dock_autohide: true
+
+# Dock icon size in pixels (16–128).
+macos_dock_tilesize: 48
+
+# Minimize windows using the "scale" effect instead of the default "genie".
+# macos_dock_mineffect: "scale"
+
+# ── Keyboard ──────────────────────────────────────────────────────────────────
+# Key repeat rate (lower = faster; macOS system default is 6, minimum is 1).
+macos_key_repeat: 2
+
+# Delay before key repeat begins (lower = shorter delay; macOS default is 25).
+macos_initial_key_repeat: 15
+
+# ── Trackpad ──────────────────────────────────────────────────────────────────
+# Enable tap-to-click (tap once = left click).
+macos_trackpad_tap_to_click: true
+
+# ── Screenshots ───────────────────────────────────────────────────────────────
+# Directory where screenshots are saved.
+macos_screenshot_location: "{{ ansible_env.HOME }}/Desktop"
+
+# Screenshot format: "png", "jpg", "gif", "pdf", "tiff".
+# macos_screenshot_type: "png"
+
+# ── Finder ────────────────────────────────────────────────────────────────────
+# Show hidden files in Finder.
+# macos_finder_show_hidden: true
+
+# Show file extensions in Finder.
+# macos_finder_show_extensions: true
+
+# ── Menu bar / clock ─────────────────────────────────────────────────────────
+# Show date in menu bar clock (requires logout/login or killall SystemUIServer).
+# macos_menu_clock_show_date: true

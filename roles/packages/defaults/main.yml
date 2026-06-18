@@ -1,5 +1,20 @@
 ---
-# Default Homebrew formulae to install.
-# Override in group_vars/all.yml or host_vars/.
+# roles/packages/defaults/main.yml
+# Default values for the packages role.
+# Override any of these in group_vars/all.yml.
+
+# CLI tools to install via `brew install`.
 homebrew_packages:
+  - git
+  - curl
   - tree
+
+# GUI applications to install via `brew install --cask`.
+homebrew_casks: []
+
+# Homebrew taps to add before installing packages.
+# Format: "owner/repo" — same as `brew tap owner/repo`.
+homebrew_taps: []
+# homebrew_taps:
+#   - homebrew/cask-fonts
+#   - aws/tap
