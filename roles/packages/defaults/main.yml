@@ -1,0 +1,5 @@
+---
+# Default Homebrew formulae to install.
+# Override in group_vars/all.yml or host_vars/.
+homebrew_packages:
+  - tree

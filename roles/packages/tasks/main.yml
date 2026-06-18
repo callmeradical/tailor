@@ -1,0 +1,7 @@
+---
+# Install Homebrew formulae declared in homebrew_packages.
+- name: Install Homebrew packages
+  community.general.homebrew:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ homebrew_packages }}"

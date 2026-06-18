@@ -1,0 +1,11 @@
+---
+# Tailor — main playbook
+# Applies all declared roles to localhost.
+# Run via: tailor apply
+- name: Configure local machine
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  roles:
+    - packages
