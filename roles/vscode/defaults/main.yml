@@ -1,0 +1,13 @@
+---
+# roles/vscode/defaults/main.yml
+# Default values for the vscode role.
+# Override in group_vars/all.yml.
+
+# List of VS Code extension IDs to install.
+# Find extension IDs from the VS Code Marketplace or by running:
+#   code --list-extensions
+vscode_extensions: []
+
+# The `code` CLI executable name (override if you use a different variant,
+# e.g., "codium" for VSCodium).
+vscode_cli: "code"

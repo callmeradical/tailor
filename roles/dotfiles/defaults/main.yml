@@ -1,0 +1,21 @@
+---
+# roles/dotfiles/defaults/main.yml
+# Default values for the dotfiles role.
+# Override in group_vars/all.yml.
+
+# URL of the dotfiles git repository to clone.
+# Set to "" (empty string) to skip this role entirely — safe default.
+dotfiles_repo_url: ""
+
+# Local path where the dotfiles repo will be cloned.
+dotfiles_dest: "{{ ansible_env.HOME }}/dotfiles"
+
+# Git branch to check out. Leave empty to use the repo's default branch.
+dotfiles_version: ""
+
+# Path (relative to dotfiles_dest) of the installer script to run after cloning.
+# Set to "" to skip running any installer.
+dotfiles_installer: "install.sh"
+
+# Arguments to pass to the installer script.
+dotfiles_installer_args: ""

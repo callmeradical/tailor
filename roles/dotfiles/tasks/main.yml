@@ -1,0 +1,64 @@
+---
+# roles/dotfiles/tasks/main.yml
+# Clones the user's dotfiles repo and runs its installer script.
+#
+# This role is a no-op when dotfiles_repo_url is empty (the default).
+# Set dotfiles_repo_url in group_vars/all.yml to activate it.
+
+# ── Guard ─────────────────────────────────────────────────────────────────────
+- name: Skip dotfiles role (dotfiles_repo_url not set)
+  ansible.builtin.debug:
+    msg: "dotfiles_repo_url is empty — skipping dotfiles role. Set it in group_vars/all.yml to activate."
+  when: dotfiles_repo_url == ""
+
+# All subsequent tasks are conditional on dotfiles_repo_url being non-empty.
+
+# ── Clone / update ────────────────────────────────────────────────────────────
+- name: Clone dotfiles repo
+  ansible.builtin.git:
+    repo: "{{ dotfiles_repo_url }}"
+    dest: "{{ dotfiles_dest }}"
+    version: "{{ dotfiles_version | default(omit) }}"
+    update: true
+  when: dotfiles_repo_url != ""
+
+# Example: clone a private repo using SSH (requires ssh-agent or deploy key)
+# - name: Clone private dotfiles repo via SSH
+#   ansible.builtin.git:
+#     repo: "git@github.com:yourname/dotfiles.git"
+#     dest: "{{ dotfiles_dest }}"
+#     accept_hostkey: true
+
+# ── Installer ─────────────────────────────────────────────────────────────────
+- name: Check for dotfiles installer script
+  ansible.builtin.stat:
+    path: "{{ dotfiles_dest }}/{{ dotfiles_installer }}"
+  register: dotfiles_installer_stat
+  when:
+    - dotfiles_repo_url != ""
+    - dotfiles_installer != ""
+
+- name: Run dotfiles installer script
+  ansible.builtin.command:
+    cmd: "bash {{ dotfiles_dest }}/{{ dotfiles_installer }} {{ dotfiles_installer_args }}"
+    chdir: "{{ dotfiles_dest }}"
+  when:
+    - dotfiles_repo_url != ""
+    - dotfiles_installer != ""
+    - dotfiles_installer_stat.stat.exists | default(false)
+  changed_when: true   # installer scripts don't report changes — assume they do something
+
+# Example: run a Makefile-based dotfiles installer
+# - name: Run dotfiles Makefile
+#   community.general.make:
+#     chdir: "{{ dotfiles_dest }}"
+#     target: install
+#   when: dotfiles_repo_url != ""
+
+# Example: symlink individual config files into place
+# - name: Symlink .zshrc
+#   ansible.builtin.file:
+#     src: "{{ dotfiles_dest }}/.zshrc"
+#     dest: "{{ ansible_env.HOME }}/.zshrc"
+#     state: link
+#   when: dotfiles_repo_url != ""

@@ -1,0 +1,159 @@
+---
+# roles/macos-prefs/tasks/main.yml
+# Applies macOS system preferences using the osx_defaults module.
+#
+# Requires: community.general collection (see requirements.yml)
+# Module docs: https://docs.ansible.com/ansible/latest/collections/community/general/osx_defaults_module.html
+#
+# After changing preferences, some apps (Dock, Finder) need to be restarted
+# to pick up the new values. The handlers at the bottom take care of that.
+
+# ── Dock ──────────────────────────────────────────────────────────────────────
+- name: Dock — enable autohide
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: autohide
+    type: bool
+    value: "{{ macos_dock_autohide }}"
+  notify: Restart Dock
+
+- name: Dock — set icon size
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: tilesize
+    type: float
+    value: "{{ macos_dock_tilesize | float }}"
+  notify: Restart Dock
+
+# Example: set dock position to the left side of the screen
+# - name: Dock — set position to left
+#   community.general.osx_defaults:
+#     domain: com.apple.dock
+#     key: orientation
+#     type: string
+#     value: "left"
+#   notify: Restart Dock
+
+# Example: disable recent apps section in the Dock
+# - name: Dock — hide recent applications
+#   community.general.osx_defaults:
+#     domain: com.apple.dock
+#     key: show-recents
+#     type: bool
+#     value: false
+#   notify: Restart Dock
+
+# ── Keyboard ──────────────────────────────────────────────────────────────────
+- name: Keyboard — set key repeat rate
+  community.general.osx_defaults:
+    domain: NSGlobalDomain
+    key: KeyRepeat
+    type: int
+    value: "{{ macos_key_repeat }}"
+
+- name: Keyboard — set initial key repeat delay
+  community.general.osx_defaults:
+    domain: NSGlobalDomain
+    key: InitialKeyRepeat
+    type: int
+    value: "{{ macos_initial_key_repeat }}"
+
+# Example: disable auto-correct
+# - name: Keyboard — disable auto-correct
+#   community.general.osx_defaults:
+#     domain: NSGlobalDomain
+#     key: NSAutomaticSpellingCorrectionEnabled
+#     type: bool
+#     value: false
+
+# Example: disable smart quotes
+# - name: Keyboard — disable smart quotes
+#   community.general.osx_defaults:
+#     domain: NSGlobalDomain
+#     key: NSAutomaticQuoteSubstitutionEnabled
+#     type: bool
+#     value: false
+
+# ── Trackpad ──────────────────────────────────────────────────────────────────
+- name: Trackpad — enable tap-to-click (user preference)
+  community.general.osx_defaults:
+    domain: com.apple.driver.AppleBluetoothMultitouch.trackpad
+    key: Clicking
+    type: int
+    value: "{{ macos_trackpad_tap_to_click | ternary(1, 0) }}"
+
+- name: Trackpad — enable tap-to-click (system-wide)
+  community.general.osx_defaults:
+    domain: NSGlobalDomain
+    key: com.apple.mouse.tapBehavior
+    type: int
+    value: "{{ macos_trackpad_tap_to_click | ternary(1, 0) }}"
+
+# Example: enable three-finger drag
+# - name: Trackpad — enable three-finger drag
+#   community.general.osx_defaults:
+#     domain: com.apple.driver.AppleBluetoothMultitouch.trackpad
+#     key: TrackpadThreeFingerDrag
+#     type: bool
+#     value: true
+
+# ── Screenshots ───────────────────────────────────────────────────────────────
+- name: Ensure screenshot directory exists
+  ansible.builtin.file:
+    path: "{{ macos_screenshot_location }}"
+    state: directory
+    mode: "0755"
+
+- name: Screenshots — set save location
+  community.general.osx_defaults:
+    domain: com.apple.screencapture
+    key: location
+    type: string
+    value: "{{ macos_screenshot_location }}"
+  notify: Restart SystemUIServer
+
+# Example: save screenshots without drop shadow
+# - name: Screenshots — disable shadow
+#   community.general.osx_defaults:
+#     domain: com.apple.screencapture
+#     key: disable-shadow
+#     type: bool
+#     value: true
+
+# Example: change screenshot format to JPG
+# - name: Screenshots — use JPG format
+#   community.general.osx_defaults:
+#     domain: com.apple.screencapture
+#     key: type
+#     type: string
+#     value: "jpg"
+
+# ── Finder ────────────────────────────────────────────────────────────────────
+# Example: show hidden files in Finder
+# - name: Finder — show hidden files
+#   community.general.osx_defaults:
+#     domain: com.apple.finder
+#     key: AppleShowAllFiles
+#     type: bool
+#     value: true
+#   notify: Restart Finder
+
+# Example: show all filename extensions
+# - name: Finder — show file extensions
+#   community.general.osx_defaults:
+#     domain: NSGlobalDomain
+#     key: AppleShowAllExtensions
+#     type: bool
+#     value: true
+#   notify: Restart Finder
+
+# Example: use list view in all Finder windows by default
+# - name: Finder — default to list view
+#   community.general.osx_defaults:
+#     domain: com.apple.finder
+#     key: FXPreferredViewStyle
+#     type: string
+#     value: "Nlsv"
+#   notify: Restart Finder
+
+

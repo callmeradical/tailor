@@ -1,0 +1,15 @@
+---
+# roles/macos-prefs/handlers/main.yml
+# Handlers restart system services after macOS defaults are changed.
+
+- name: Restart Dock
+  ansible.builtin.command: killall Dock
+  changed_when: false
+
+- name: Restart Finder
+  ansible.builtin.command: killall Finder
+  changed_when: false
+
+- name: Restart SystemUIServer
+  ansible.builtin.command: killall SystemUIServer
+  changed_when: false
