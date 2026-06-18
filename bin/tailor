@@ -1,82 +1,160 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # tailor — thin wrapper around ansible-playbook for personal machine config
+#
+# Usage: tailor <command> [options]
+#
+# Commands:
+#   apply [--check] [--role <name>] [--verbose]
+#       Apply configuration to the local machine.
+#       --check    Dry-run: show what would change without modifying anything
+#                  (runs ansible-playbook --check, not syntax-check)
+#       --role     Apply only a specific role, identified by tag name
+#                  (maps to ansible-playbook --tags <name>)
+#       --verbose  Enable verbose Ansible output (-v)
+#
+#   validate
+#       Syntax-check the playbook without applying any changes
+#       (runs ansible-playbook --syntax-check)
+#
+#   check
+#       Alias for: apply --check
+#
+#   help, --help, -h
+#       Show this help text
+#
+# Environment:
+#   TAILOR_CONFIG_DIR  Config repo location (default: ~/.config/tailor)
+#
+# Decisions:
+#   --role maps to ansible-playbook --tags <name> so that a single site.yml
+#   can selectively run a role without maintaining per-role playbooks. Ansible
+#   tags offer the same granularity with less overhead. Tag each role in
+#   site.yml with its role name to take advantage of this.
+#
+#   apply --check runs ansible-playbook --check (real dry-run that connects to
+#   the control path and evaluates conditionals). validate runs --syntax-check
+#   (parse-only, no task evaluation). These serve different purposes and should
+#   not be confused.
+
 set -euo pipefail
 
+# Detect whether TAILOR_CONFIG_DIR was explicitly provided by the caller.
+# If it was, honour it unconditionally (enables testing with fixtures and lets
+# users override the default without the dev-worktree heuristic interfering).
+_tailor_config_explicit="${TAILOR_CONFIG_DIR+set}"
 TAILOR_CONFIG_DIR="${TAILOR_CONFIG_DIR:-$HOME/.config/tailor}"
-# In dev: use the directory containing this script's parent
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# If running from the worktree/dev, use the repo root; otherwise use config dir
-if [ -f "$SCRIPT_DIR/site.yml" ]; then
-  PLAYBOOK_DIR="$SCRIPT_DIR"
+
+# Locate playbook directory.
+#   1. If TAILOR_CONFIG_DIR was explicitly set, use it.
+#   2. Otherwise, if running from a development worktree (site.yml is in the
+#      repo root next to bin/), use the repo root — no TAILOR_CONFIG_DIR setup
+#      required during development.
+#   3. Fall back to TAILOR_CONFIG_DIR (production install).
+_script_dir="$(cd "$(dirname "$0")/.." && pwd)"
+if [ "$_tailor_config_explicit" = "set" ]; then
+  PLAYBOOK_DIR="$TAILOR_CONFIG_DIR"
+elif [ -f "$_script_dir/site.yml" ]; then
+  PLAYBOOK_DIR="$_script_dir"
 elif [ -f "$TAILOR_CONFIG_DIR/site.yml" ]; then
   PLAYBOOK_DIR="$TAILOR_CONFIG_DIR"
 else
-  echo "tailor: no site.yml found in $SCRIPT_DIR or $TAILOR_CONFIG_DIR" >&2
+  echo "tailor: no site.yml found in $_script_dir or $TAILOR_CONFIG_DIR" >&2
   exit 1
 fi
 
+# ---------------------------------------------------------------------------
 usage() {
-  echo "Usage: tailor <command> [options]"
-  echo ""
-  echo "Commands:"
-  echo "  apply [--check] [--role <name>] [--verbose]"
-  echo "      Apply configuration (use --check for dry-run)"
-  echo "  validate"
-  echo "      Syntax-check the playbook without applying"
-  echo ""
-  echo "Environment:"
-  echo "  TAILOR_CONFIG_DIR  Config repo location (default: ~/.config/tailor)"
+  cat <<'EOF'
+Usage: tailor <command> [options]
+
+Commands:
+  apply [--check] [--role <name>] [--verbose]
+      Apply configuration to the local machine.
+      --check    Dry-run — show what would change without modifying anything
+      --role     Apply only one role by tag name (e.g. --role packages)
+      --verbose  Verbose Ansible output
+
+  validate
+      Syntax-check the playbook (no changes, no task evaluation)
+
+  check
+      Alias for: apply --check
+
+  help, --help, -h
+      Show this message
+
+Environment:
+  TAILOR_CONFIG_DIR   Config repo location (default: ~/.config/tailor)
+EOF
 }
 
+# ---------------------------------------------------------------------------
+cmd_apply() {
+  check_flag=0
+  verbose_flag=0
+  role_filter=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --check)        check_flag=1; shift ;;
+      --verbose|-v)   verbose_flag=1; shift ;;
+      --role)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+          echo "tailor apply: --role requires an argument" >&2
+          exit 1
+        fi
+        role_filter="$2"; shift 2 ;;
+      *)
+        echo "tailor apply: unknown option '$1'" >&2
+        usage >&2
+        exit 1 ;;
+    esac
+  done
+
+  set -- ansible-playbook -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
+
+  if [ -n "$role_filter" ]; then
+    set -- "$@" --tags "$role_filter"
+  fi
+
+  if [ "$check_flag" -eq 1 ]; then
+    echo "tailor: dry-run (--check) on $PLAYBOOK_DIR/site.yml" >&2
+    set -- "$@" --check
+  else
+    echo "tailor: applying $PLAYBOOK_DIR/site.yml" >&2
+  fi
+
+  if [ "$verbose_flag" -eq 1 ]; then
+    set -- "$@" -v
+  fi
+
+  "$@"
+}
+
+# ---------------------------------------------------------------------------
+cmd_validate() {
+  echo "tailor: validating (syntax-check) $PLAYBOOK_DIR/site.yml" >&2
+  ansible-playbook --syntax-check -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
+}
+
+# ---------------------------------------------------------------------------
 cmd="${1:-}"
-shift || true
+[ $# -gt 0 ] && shift || true
 
 case "$cmd" in
   apply)
-    extra_args=()
-    role_filter=""
-    while [[ $# -gt 0 ]]; do
-      case "$1" in
-        --check)   extra_args+=("--check"); shift ;;
-        --verbose|-v) extra_args+=("--verbose"); shift ;;
-        --role)    role_filter="$2"; shift 2 ;;
-        *)         echo "tailor apply: unknown option '$1'" >&2; exit 1 ;;
-      esac
-    done
-
-    playbook_args=("--syntax-check")
-    # If --check was passed, run syntax-check (safe, no changes)
-    # For a real apply (no --check), run the playbook normally
-    if [[ " ${extra_args[*]} " == *" --check "* ]]; then
-      echo "tailor: running ansible syntax check on $PLAYBOOK_DIR/site.yml"
-      ansible-playbook "${extra_args[@]}" -i localhost, -c local \
-        "$PLAYBOOK_DIR/site.yml" \
-        ${role_filter:+--tags "$role_filter"} \
-        2>&1
-    else
-      echo "tailor: applying $PLAYBOOK_DIR/site.yml"
-      ansible-playbook -i localhost, -c local \
-        "$PLAYBOOK_DIR/site.yml" \
-        ${role_filter:+--tags "$role_filter"} \
-        "${extra_args[@]}" \
-        2>&1
-    fi
-    ;;
+    cmd_apply "$@" ;;
+  check)
+    cmd_apply --check "$@" ;;
   validate)
-    echo "tailor: validating $PLAYBOOK_DIR/site.yml"
-    ansible-playbook --syntax-check -i localhost, -c local \
-      "$PLAYBOOK_DIR/site.yml" 2>&1
-    ;;
+    cmd_validate ;;
   help|--help|-h)
-    usage
-    ;;
+    usage ;;
   "")
     usage
-    exit 1
-    ;;
+    exit 1 ;;
   *)
     echo "tailor: unknown command '$cmd'" >&2
     usage >&2
-    exit 1
-    ;;
+    exit 1 ;;
 esac
