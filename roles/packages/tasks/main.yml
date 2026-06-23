@@ -1,44 +1,51 @@
 # roles/packages/tasks/main.yml
-# Installs Homebrew formulae and casks declared in group_vars/all.yml.
+# Installs packages for the current OS.
+#
+# macOS  — Homebrew formulae, casks, and taps (community.general.homebrew*)
+# Linux  — apt packages (ansible.builtin.apt, Debian/Ubuntu only)
+#           snap packages (community.general.snap, any Linux distro)
+#
+# Shared packages come from group_vars/all.yml.
+# Per-machine packages come from host_vars/<hostname>/main.yml (_extra variables).
+# Both lists are merged — defining extras does not drop shared packages.
 #
 # Requires: community.general collection (see requirements.yml)
-# Module docs: https://docs.ansible.com/ansible/latest/collections/community/general/homebrew_module.html
 
-# ── Taps ──────────────────────────────────────────────────────────────────────
+# ── Homebrew (macOS only) ─────────────────────────────────────────────────────
+
 - name: Add Homebrew taps
   community.general.homebrew_tap:
     name: "{{ item }}"
     state: present
-  loop: "{{ homebrew_taps }}"
-  when: homebrew_taps | length > 0
+  loop: "{{ (homebrew_taps + homebrew_taps_extra) | unique }}"
+  when:
+    - ansible_system == "Darwin"
+    - (homebrew_taps + homebrew_taps_extra) | length > 0
 
-# ── Formulae ──────────────────────────────────────────────────────────────────
 - name: Install Homebrew packages (formulae)
   community.general.homebrew:
     name: "{{ item }}"
     state: present
-  loop: "{{ homebrew_packages }}"
-  when: homebrew_packages | length > 0
+  loop: "{{ (homebrew_packages + homebrew_packages_extra) | unique }}"
+  when:
+    - ansible_system == "Darwin"
+    - (homebrew_packages + homebrew_packages_extra) | length > 0
 
 # Example: install a package and upgrade it to the latest version
 # - name: Install and upgrade ripgrep
 #   community.general.homebrew:
 #     name: ripgrep
 #     state: latest
+#   when: ansible_system == "Darwin"
 
-# Example: install a package at a specific version via a tap
-# - name: Install terraform 1.7 from hashicorp tap
-#   community.general.homebrew:
-#     name: hashicorp/tap/terraform
-#     state: present
-
-# ── Casks ─────────────────────────────────────────────────────────────────────
 - name: Install Homebrew casks (GUI apps)
   community.general.homebrew_cask:
     name: "{{ item }}"
     state: present
-  loop: "{{ homebrew_casks }}"
-  when: homebrew_casks | length > 0
+  loop: "{{ (homebrew_casks + homebrew_casks_extra) | unique }}"
+  when:
+    - ansible_system == "Darwin"
+    - (homebrew_casks + homebrew_casks_extra) | length > 0
 
 # Example: install a cask and accept its license
 # - name: Install 1Password
@@ -46,3 +53,48 @@
 #     name: 1password
 #     state: present
 #     accept_external_apps: true
+#   when: ansible_system == "Darwin"
+
+# ── APT (Debian/Ubuntu Linux only) ───────────────────────────────────────────
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+  when:
+    - ansible_os_family == "Debian"
+    - (apt_packages + apt_packages_extra) | length > 0
+
+- name: Install apt packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop: "{{ (apt_packages + apt_packages_extra) | unique }}"
+  when:
+    - ansible_os_family == "Debian"
+    - (apt_packages + apt_packages_extra) | length > 0
+
+# ── Snap (Linux only) ─────────────────────────────────────────────────────────
+
+- name: Install snap packages (strict confinement)
+  community.general.snap:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop: "{{ (snap_packages + snap_packages_extra) | unique }}"
+  when:
+    - ansible_system == "Linux"
+    - (snap_packages + snap_packages_extra) | length > 0
+
+- name: Install snap packages (classic confinement)
+  community.general.snap:
+    name: "{{ item }}"
+    state: present
+    classic: true
+  become: true
+  loop: "{{ (snap_classic_packages + snap_classic_packages_extra) | unique }}"
+  when:
+    - ansible_system == "Linux"
+    - (snap_classic_packages + snap_classic_packages_extra) | length > 0

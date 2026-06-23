@@ -2,7 +2,7 @@
 
 **Personal machine configuration management. Ansible-native. Bootstrap from zero with one command.**
 
-Tailor is a declarative system configuration manager for macOS (and Linux) inspired by [Boxen](https://github.com/boxen/our-boxen). You maintain a git repository of Ansible roles that describes how your machine should look. Tailor wraps Ansible with a simple CLI and a `tailor adopt` command that captures ad-hoc changes back into your declared config.
+Tailor is a declarative system configuration manager for macOS (and Linux) inspired by [Boxen](https://github.com/boxen/our-boxen). You maintain **one git repository** that covers all your machines. On each machine, `tailor apply` pulls from that repo and applies the right configuration automatically — shared packages go on everything, machine-specific packages go only where you declared them.
 
 Switch laptops. Run one command. Done.
 
@@ -43,7 +43,31 @@ A starter repo with five ready-to-configure roles:
 | `vscode` | VS Code extensions |
 | `hooks` | Shell scripts run before and after apply |
 
-Configure everything in `group_vars/all.yml`. The config repo is a standard Ansible project — no new DSL to learn.
+The repo covers every machine. Tailor uses `hostname -s` to load the right config automatically — no flags, no manual selection.
+
+```
+group_vars/all.yml          ← shared: applied on every machine
+host_vars/
+  work-mbp/
+    main.yml                ← extras for the machine named "work-mbp"
+  home-studio/
+    main.yml                ← extras for the machine named "home-studio"
+```
+
+Use `homebrew_packages_extra` and `homebrew_casks_extra` in your `host_vars` files to add packages on top of the shared base. Defining extras does not replace the shared list — both are installed.
+
+```yaml
+# host_vars/work-mbp/main.yml
+homebrew_packages_extra:
+  - slack
+  - zoom
+homebrew_casks_extra:
+  - 1password
+```
+
+See `host_vars/.example-hostname/main.yml` for an annotated template.
+
+The config repo is a standard Ansible project — no new DSL to learn.
 
 ---
 
@@ -52,15 +76,18 @@ Configure everything in `group_vars/all.yml`. The config repo is a standard Ansi
 The `tailor adopt` command captures ad-hoc changes back into your declared config — one item at a time.
 
 ```sh
-# You installed something manually. Now declare it:
+# Installed something on this machine — declare it (machine-specific):
 brew install ripgrep
 tailor adopt brew ripgrep
 
-# You edited a config file. Now version-control it:
+# Installed something you want on every machine — declare it shared:
+tailor adopt brew --shared git
+
+# Edited a config file — version-control it (shared across machines):
 tailor adopt file ~/.gitconfig
 ```
 
-Both are idempotent. Both open the modified file in `$EDITOR` so you can review before committing.
+All adopt commands are idempotent and open the modified file in `$EDITOR` so you can review before committing.
 
 ---
 

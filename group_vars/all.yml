@@ -1,8 +1,12 @@
 ---
 # group_vars/all.yml
 # ─────────────────────────────────────────────────────────────────────────────
-# User-level variables shared across all roles.
-# Edit this file to configure your machine setup.
+# Shared variables — applied on EVERY machine that runs tailor apply.
+#
+# For machine-specific overrides, create host_vars/<hostname>/main.yml
+# where <hostname> matches `hostname -s` on that machine. Use the
+# homebrew_packages_extra / homebrew_casks_extra variables there to add
+# packages on top of this shared base without replacing it.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Identity ──────────────────────────────────────────────────────────────────
@@ -61,6 +65,27 @@ vscode_extensions: []
   # - esbenp.prettier-vscode
   # - dbaeumer.vscode-eslint
   # - ms-azuretools.vscode-docker
+
+# ── APT packages (Debian/Ubuntu Linux) ───────────────────────────────────────
+# CLI tools to install via `apt install` on every Linux machine.
+# Per-machine additions go in host_vars/<hostname>/main.yml as apt_packages_extra.
+apt_packages: []
+  # - build-essential
+  # - curl
+  # - git
+  # - ripgrep
+  # - fd-find
+
+# ── Snap packages (Linux) ─────────────────────────────────────────────────────
+# Packages installed via `snap install` (strict confinement).
+snap_packages: []
+  # - htop
+
+# Packages installed via `snap install --classic` (classic confinement).
+snap_classic_packages: []
+  # - code
+  # - go
+  # - slack
 
 # ── macOS preferences ─────────────────────────────────────────────────────────
 # Fine-grained overrides for macOS defaults.

@@ -19,11 +19,21 @@
 #   check
 #       Alias for: apply --check
 #
-#   adopt brew <package>
-#       Add an already-installed Homebrew package to the declared config.
+#   adopt brew [--shared] <package>
+#       Add an already-installed Homebrew package to the declared config (macOS).
+#       Writes to host_vars/<hostname>/main.yml by default (machine-specific).
+#       Use --shared to write to group_vars/all.yml (every machine).
+#
+#   adopt apt [--shared] <package>
+#       Add an already-installed apt package to the declared config (Linux/Debian).
+#       Same --shared semantics as adopt brew.
+#
+#   adopt snap [--shared] [--classic] <package>
+#       Add an already-installed snap package to the declared config (Linux).
+#       Use --classic for packages that require classic confinement (e.g. code, go).
 #
 #   adopt file <path>
-#       Register an existing config file into the dotfiles role.
+#       Register an existing config file into the dotfiles role (shared).
 #
 #   usage, --usage
 #       Print agent-oriented usage instructions (machine-readable briefing)
@@ -91,10 +101,16 @@ Commands:
   check
       Alias for: apply --check
 
-  adopt brew <package>
-      Add an already-installed Homebrew package to the declared config
+  adopt brew [--shared] <package>
+      Add an installed Homebrew package (macOS).
+      Default: host_vars/<hostname>/main.yml (this machine only)
+      --shared: group_vars/all.yml (every machine)
+  adopt apt [--shared] <package>
+      Add an installed apt package (Linux/Debian). Same --shared semantics.
+  adopt snap [--shared] [--classic] <package>
+      Add an installed snap package (Linux). Use --classic for code, go, etc.
   adopt file <path>
-      Register an existing config file into the dotfiles role
+      Register an existing config file into the dotfiles role (shared)
 
   usage, --usage
       Print agent-oriented usage instructions
@@ -131,7 +147,7 @@ cmd_apply() {
     esac
   done
 
-  set -- ansible-playbook -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
+  set -- ansible-playbook -i "$(hostname -s)," -c local "$PLAYBOOK_DIR/site.yml"
 
   if [ -n "$role_filter" ]; then
     set -- "$@" --tags "$role_filter"
@@ -157,7 +173,7 @@ cmd_adopt() {
   shift || true
   case "$_subcommand" in
     brew|file)
-      sh "$_lib_dir/adopt.sh" "$_subcommand" "${1:-}"
+      sh "$_lib_dir/adopt.sh" "$_subcommand" "$@"
       ;;
     "")
       echo "tailor adopt: usage: tailor adopt <brew|file> <argument>" >&2; exit 1 ;;
@@ -188,27 +204,37 @@ AGENT QUICK-START
 CONFIG LOCATION
 ---------------
   $config_dir/
-    group_vars/all.yml   — primary config (packages, dotfiles url, prefs)
-    site.yml             — main Ansible playbook (do not edit unless extending)
+    group_vars/all.yml       — shared config (packages, dotfiles url, prefs)
+    host_vars/<hostname>/    — per-machine overrides (optional; hostname = $(hostname -s))
+    site.yml                 — main Ansible playbook (do not edit unless extending)
     roles/
-      packages/          — Homebrew formulae + casks
-      dotfiles/          — dotfiles repo clone + installer
-      macos-prefs/       — osx_defaults (dock, keyboard, trackpad, screenshots)
-      vscode/            — VS Code extensions
-      hooks/             — pre/post apply shell scripts
+      packages/              — Homebrew formulae + casks
+      dotfiles/              — dotfiles repo clone + installer
+      macos-prefs/           — osx_defaults (dock, keyboard, trackpad, screenshots)
+      vscode/                — VS Code extensions
+      hooks/                 — pre/post apply shell scripts
 
-KEY VARIABLES (group_vars/all.yml)
------------------------------------
-  homebrew_packages: [...]     — list of brew formulae to install
-  homebrew_casks: [...]        — list of brew cask apps to install
-  dotfiles_repo_url: "..."     — git URL of dotfiles repo (empty = skip)
-  vscode_extensions: [...]     — VS Code extension IDs (empty = skip)
-  macos_dock_autohide: true    — autohide dock
-  macos_dock_tilesize: 48      — dock icon size in pixels
-  macos_key_repeat: 2          — key repeat rate (1=fastest)
-  macos_initial_key_repeat: 15 — initial key repeat delay
+KEY VARIABLES
+-------------
+Shared (group_vars/all.yml — applied on every machine):
+  homebrew_packages: [...]        — brew formulae on every machine
+  homebrew_casks: [...]           — brew cask apps on every machine
+  dotfiles_repo_url: "..."        — git URL of dotfiles repo (empty = skip)
+  vscode_extensions: [...]        — VS Code extension IDs (empty = skip)
+  macos_dock_autohide: true
+  macos_dock_tilesize: 48
+  macos_key_repeat: 2
+  macos_initial_key_repeat: 15
   macos_trackpad_tap_to_click: true
   macos_screenshot_location: ~/Desktop
+
+Per-machine (host_vars/<hostname>/main.yml — this machine only):
+  homebrew_packages_extra: [...]       — added on top of homebrew_packages (macOS)
+  homebrew_casks_extra: [...]          — added on top of homebrew_casks (macOS)
+  apt_packages_extra: [...]            — added on top of apt_packages (Linux)
+  snap_packages_extra: [...]           — added on top of snap_packages (Linux)
+  snap_classic_packages_extra: [...]   — added on top of snap_classic_packages (Linux)
+  (any group_vars variable can also be fully overridden here)
 
 ROLES (use with --role flag)
 -----------------------------
@@ -220,14 +246,38 @@ ROLES (use with --role flag)
 
 ADOPT WORKFLOW (capture ad-hoc changes)
 ----------------------------------------
-  # You installed something manually — declare it:
-  brew install ripgrep
-  tailor adopt brew ripgrep
+  # macOS — machine-specific:
+  brew install ripgrep && tailor adopt brew ripgrep
+  # macOS — shared across all machines:
+  tailor adopt brew --shared git
 
-  # You edited a config file — version-control it:
+  # Linux — machine-specific:
+  sudo apt install htop && tailor adopt apt htop
+  # Linux — shared:
+  tailor adopt apt --shared curl
+
+  # Linux snap (strict):
+  sudo snap install htop && tailor adopt snap htop
+  # Linux snap (classic confinement):
+  sudo snap install --classic code && tailor adopt snap --classic code
+
+  # Any OS — version-control a config file (shared):
   tailor adopt file ~/.gitconfig
 
-  Both commands are idempotent and open the modified file in \$EDITOR.
+  All adopt commands are idempotent and open the modified file in \$EDITOR.
+
+MULTI-MACHINE SETUP
+--------------------
+  One repo covers every machine. tailor uses \$(hostname -s) to load the right
+  host_vars directory automatically. Structure:
+
+    group_vars/all.yml            — shared: packages and prefs for every machine
+    host_vars/
+      work-mbp/main.yml           — extras for the machine named "work-mbp"
+      home-studio/main.yml        — extras for the machine named "home-studio"
+
+  Bootstrap any new machine with the same single command:
+    curl -fsSL .../install.sh | bash -s -- <your-config-repo-url>
 
 ENVIRONMENT
 -----------
@@ -247,7 +297,7 @@ EOF
 # ---------------------------------------------------------------------------
 cmd_validate() {
   echo "tailor: validating (syntax-check) $PLAYBOOK_DIR/site.yml" >&2
-  ansible-playbook --syntax-check -i localhost, -c local "$PLAYBOOK_DIR/site.yml"
+  ansible-playbook --syntax-check -i "$(hostname -s)," -c local "$PLAYBOOK_DIR/site.yml"
 }
 
 # ---------------------------------------------------------------------------
