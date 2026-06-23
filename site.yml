@@ -1,6 +1,6 @@
 ---
 # Tailor — Main Playbook
-# Applies all declared roles to localhost.
+# Applies all declared roles to the current host (inventory_hostname = $(hostname -s)).
 #
 # Usage:
 #   tailor apply                 # apply everything
@@ -11,7 +11,7 @@
 # To enable or disable a role, comment/uncomment its entry in the roles list.
 
 - name: Configure local machine
-  hosts: localhost
+  hosts: all
   connection: local
   gather_facts: true
 

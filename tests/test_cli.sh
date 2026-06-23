@@ -57,7 +57,7 @@ mkdir -p "$FIXTURE_DIR"
 cat > "$FIXTURE_DIR/site.yml" <<'YAML'
 ---
 - name: Test play
-  hosts: localhost
+  hosts: all
   connection: local
   gather_facts: false
   tasks:

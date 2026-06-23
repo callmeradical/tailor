@@ -69,7 +69,7 @@ The logic behind `tailor adopt`. For `brew`: parses the Homebrew role vars file,
 ### Architectural Decisions
 
 - **Tailor is Ansible-native.** The config repo is a valid Ansible project. Tailor does not invent a new DSL or compile to Ansible — it IS Ansible, wrapped with a better CLI and a starter template.
-- **Single config repo per user.** One git repo, one machine (or many machines sharing the same declared state). Team sharing and per-user overrides are deferred to v2.
+- **One repo, many machines.** One git repo covers every machine. Tailor uses `hostname -s` as the Ansible inventory hostname; Ansible automatically loads `host_vars/<hostname>/` on top of `group_vars/all.yml`. Shared packages live in `group_vars/all.yml`; machine-specific additions use `homebrew_packages_extra` / `homebrew_casks_extra` in `host_vars/<hostname>/main.yml`. List variables use the `_extra` pattern so per-machine additions do not replace the shared base — both are always installed.
 - **Dotfiles are referenced, not owned.** Tailor provides a role that clones the user's existing dotfiles repo and runs its installer. It does not manage dotfile content itself.
 - **Secrets are out of scope.** Tailor does not handle secrets in v1. The starter template includes a comment pointing to 1Password CLI and Pass as recommended options. A hook point in the apply lifecycle is provided for users to wire in their own secrets solution.
 - **No `sync` command.** The workflow is `apply` + `tailor adopt` for individual items. Bulk import of the live machine state is not supported in v1.

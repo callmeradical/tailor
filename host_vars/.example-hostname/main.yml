@@ -1,0 +1,53 @@
+---
+# host_vars/.example-hostname/main.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Per-machine variable overrides. Copy this directory to host_vars/<hostname>/
+# where <hostname> matches the output of `hostname -s` on that machine.
+#
+# ADDING PACKAGES
+# Use the _extra variables to add packages on top of the shared base in
+# group_vars/all.yml. Do not redefine homebrew_packages here — that would
+# replace the shared list rather than extend it.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── macOS (Homebrew) ──────────────────────────────────────────────────────────
+
+# Packages installed on this machine only (in addition to group_vars/all.yml):
+homebrew_packages_extra: []
+  # - slack
+  # - zoom
+
+# Cask apps installed on this machine only:
+homebrew_casks_extra: []
+  # - iterm2
+  # - 1password
+
+# Taps needed only on this machine:
+# homebrew_taps_extra: []
+
+# ── Linux (apt / snap) ────────────────────────────────────────────────────────
+
+# apt packages for this machine only (Debian/Ubuntu):
+apt_packages_extra: []
+  # - htop
+  # - build-essential
+
+# Snap packages for this machine only (strict confinement):
+snap_packages_extra: []
+  # - htop
+
+# Snap packages for this machine only (classic confinement):
+snap_classic_packages_extra: []
+  # - code
+  # - go
+
+# macOS preference overrides for this machine:
+# macos_key_repeat: 1
+# macos_dock_tilesize: 36
+# macos_trackpad_tap_to_click: true
+
+# VS Code extensions for this machine only (in addition to group_vars):
+# vscode_extensions: []
+
+# Dotfiles repo override (if this machine uses a different dotfiles branch):
+# dotfiles_repo_url: ""
