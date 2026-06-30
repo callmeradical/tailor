@@ -10,102 +10,150 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Identity ──────────────────────────────────────────────────────────────────
-# Your macOS username. Used by roles that need to act as you (e.g., file paths).
-username: "{{ ansible_user_id }}"   # auto-detected; override with your username
-# username: "jsmith"
+username: "{{ ansible_user_id }}"
 
 # ── Dotfiles ──────────────────────────────────────────────────────────────────
-# URL of your dotfiles git repository.
-# Leave empty ("") to skip the dotfiles role entirely.
 dotfiles_repo_url: ""
-# dotfiles_repo_url: "https://github.com/yourname/dotfiles.git"
-
-# Where to clone the dotfiles repo on disk.
-dotfiles_dest: "{{ ansible_facts["env"]["HOME"] }}/dotfiles"
-
-# Path (relative to dotfiles_dest) of the installer script to run after cloning.
-# Set to "" to skip the installer step.
+dotfiles_dest: "{{ ansible_facts['env']['HOME'] }}/dotfiles"
 dotfiles_installer: "install.sh"
 
-# ── Homebrew packages ─────────────────────────────────────────────────────────
-# CLI tools to install via `brew install`.
+# ── Homebrew taps ─────────────────────────────────────────────────────────────
+homebrew_taps:
+  - callmeradical/tap       # babydriver, lc, ks-cli
+  - marcus/tap              # td
+  - bnomei/tap              # tmux-mcp-rs
+  - steipete/tap            # worktrunk
+  - keith/formulae          # reminders-cli
+  - loft-sh/tap             # vcluster
+
+# ── Core CLI tools ────────────────────────────────────────────────────────────
 homebrew_packages:
+  # Essentials
   - git
   - curl
+  - wget
   - tree
-  # - ripgrep
-  # - fd
-  # - bat
-  # - fzf
-  # - jq
-  # - gh
-  # - mise          # polyglot runtime manager (replaces nvm/rbenv/pyenv)
-  # - ansible       # if you want Ansible installed via Homebrew
+  - jq
+  - fzf
+  - bat
+  - ripgrep
+  - fd
+  - gawk
+  - gnu-sed
+  - coreutils
+  - watch
+  - rsync
+  - pv
 
-# Desktop applications to install via `brew install --cask`.
-homebrew_casks: []
-  # - iterm2
-  # - visual-studio-code
-  # - raycast
-  # - 1password
-  # - arc
-  # - slack
-  # - zoom
-  # - docker
-  # - obsidian
+  # Shell & terminal
+  - tmux
+  - starship
+  - zoxide
+  - sesh
+  - nushell
+  - thefuck
+  - zsh-completions
+  - zsh-async
+  - glow
+  - television
+  - ranger
+  - lazygit
+
+  # Git
+  - gh
+  - glab
+  - act
+  - just
+
+  # Languages & runtimes
+  - go
+  - node
+  - mise
+  - fnm
+  - python@3.13
+  - uv
+  - pipx
+  - poetry
+
+  # AI / coding agents
+  - opencode
+  - block-goose-cli
+  - worktrunk
+
+  # Personal tools (callmeradical/tap)
+  - babydriver
+  - lc
+
+  # Task management
+  - td
+  - reminders-cli
+
+  # Secrets & auth
+  - pass
+  - gnupg
+  - doppler
+  - age
+
+  # Cloud & infra
+  - awscli
+  - aws-sam-cli
+  - ansible
+  - terraform
+  - helm
+  - kubernetes-cli
+  - k3d
+  - vcluster
+  - tailscale
+  - mole
+
+  # Containers
+  - docker
+  - docker-compose
+
+  # Security & scanning
+  - hadolint
+  - shellcheck
+  - semgrep
+  - trivy
+  - syft
+  - sonar-scanner
+
+  # Editors & productivity
+  - neovim
+  - himalaya
+  - notmuch
+  - terminal-notifier
+  - nowplaying-cli
+
+  # Docs & media
+  - pandoc
+  - hugo
+  - marp-cli
+  - ffmpeg
+  - graphviz
+  - imagemagick
+
+  # Misc utilities
+  - tmux-mcp-rs
+  - qrencode
+  - tldr
+
+# ── Homebrew casks ────────────────────────────────────────────────────────────
+homebrew_casks:
+  - ghostty
+  - raycast
+  - aerospace
+  - 1password-cli
+  - codex
+  - block-goose
+  - font-monaspace-nerd-font
+  - font-symbols-only-nerd-font
+  - font-noto-sans-symbols-2
 
 # ── VS Code extensions ────────────────────────────────────────────────────────
-# Extension IDs from the VS Code Marketplace.
-# Run `code --list-extensions` to get IDs for your current extensions.
 vscode_extensions: []
-  # - ms-python.python
-  # - ms-vscode.cpptools
-  # - vscodevim.vim
-  # - eamodio.gitlens
-  # - esbenp.prettier-vscode
-  # - dbaeumer.vscode-eslint
-  # - ms-azuretools.vscode-docker
-
-# ── APT packages (Debian/Ubuntu Linux) ───────────────────────────────────────
-# CLI tools to install via `apt install` on every Linux machine.
-# Per-machine additions go in host_vars/<hostname>/main.yml as apt_packages_extra.
-apt_packages: []
-  # - build-essential
-  # - curl
-  # - git
-  # - ripgrep
-  # - fd-find
-
-# ── Snap packages (Linux) ─────────────────────────────────────────────────────
-# Packages installed via `snap install` (strict confinement).
-snap_packages: []
-  # - htop
-
-# Packages installed via `snap install --classic` (classic confinement).
-snap_classic_packages: []
-  # - code
-  # - go
-  # - slack
 
 # ── macOS preferences ─────────────────────────────────────────────────────────
-# Fine-grained overrides for macOS defaults.
-# Most users can leave this section empty and rely on the role's own defaults.
-# See roles/macos-prefs/defaults/main.yml for all available variables.
-
-# Dock icon size in pixels (16–128).
-# macos_dock_tilesize: 48
-
-# Autohide the Dock (true/false).
-# macos_dock_autohide: true
-
-# Key repeat rate (lower = faster; macOS default is 6, minimum is 1).
-# macos_key_repeat: 2
-
-# Delay before key repeat starts (lower = faster; macOS default is 25).
-# macos_initial_key_repeat: 15
-
-# Enable tap-to-click on trackpad (true/false).
-# macos_trackpad_tap_to_click: true
-
-# Folder where screenshots are saved.
-# macos_screenshot_location: "{{ ansible_facts["env"]["HOME"] }}/Desktop"
+macos_dock_autohide: true
+macos_key_repeat: 2
+macos_initial_key_repeat: 15
